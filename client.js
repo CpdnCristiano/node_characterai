@@ -199,6 +199,29 @@ class Client {
             return response.voices;
         } else Error("Could not fetch voices");
     }
+    
+    async createChat(characterId) {
+        if (!this.isAuthenticated()) throw Error('You must be authenticated to do this.');
+        if (characterId == undefined || typeof (characterId) != 'string') throw Error('Invalid arguments.')
+
+        let request = await this.requester.request('https://beta.character.ai/chat/history/create/', {
+            body: Parser.stringify({
+                character_external_id: characterId,
+                history_external_id: null,
+            }),
+            method: 'POST',
+            headers: this.getHeaders()
+        })
+        if (request.status() === 200) {
+            let response = await Parser.parseJSON(request);
+            try {
+                response = JSON.parse(response);
+            } catch (error) { }
+            const continueBody = response;
+            return new Chat(this, characterId, continueBody)
+        }
+        else Error('Could not create a new chat.')
+    }
 
     // authentification
     async authenticateWithToken(token) {
